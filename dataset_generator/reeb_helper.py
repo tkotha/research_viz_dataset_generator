@@ -4,9 +4,9 @@ import os.path
 import ntpath
 #-------------------------RECON RELATED HELPER FUNCTIONS-------------------
 # no, I am not ashamed at all
-reeb_recon_path = "..\\external\\recon\\computeReebGraph.bat"
+reeb_recon_path = r"..\external\recon\computeReebGraph.bat"
 
-pair_jar_path = "..\\external\\ReebGraphPairing\\ReebGraphPairing.jar"
+pair_jar_path = r"..\external\ReebGraphPairing\ReebGraphPairing.jar"
 # def createReebFile(modelFilePath, funcFilePath):
 # 	os.system(reeb_recon_path +" "+ modelFilePath +" "+funcFilePath)
 
