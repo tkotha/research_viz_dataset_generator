@@ -58,7 +58,11 @@ def minify(JSON_file_name):
 	
 	os.chdir('\\'.join(file_name.split('\\')[0:-1]))
 	print(path7zip)
-	ret = subprocess.check_output([path7zip, "a", "-tzip", zip_file_name, new_file_name])#JSON_file_name])
+	ret = None
+	if os.name == 'nt': #this is windows
+		ret = subprocess.check_output([path7zip, "a", "-tzip", zip_file_name, new_file_name])#JSON_file_name])
+	else:	#for now this is everything else
+		ret = subprocess.check_output(["zip", zip_file_name, new_file_name])
 	os.chdir(olddir)
 	return zip_file_name
 

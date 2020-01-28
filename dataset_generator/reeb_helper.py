@@ -4,14 +4,17 @@ import os.path
 import ntpath
 #-------------------------RECON RELATED HELPER FUNCTIONS-------------------
 # no, I am not ashamed at all
-reeb_recon_path = r"..\external\recon\computeReebGraph.bat"
-
+reeb_recon_path_win = r"..\external\recon\computeReebGraph.bat"
+reeb_recon_path_unix = r"..\external\recon\computeReebGraph.sh"
 pair_jar_path = r"..\external\ReebGraphPairing\ReebGraphPairing.jar"
 # def createReebFile(modelFilePath, funcFilePath):
 # 	os.system(reeb_recon_path +" "+ modelFilePath +" "+funcFilePath)
 
 def createReebFile(OBJFPath, ReebFilename):
-	os.system(reeb_recon_path +" "+OBJFPath+" "+ReebFilename)
+	if os.name == 'nt': #windows path
+		os.system(reeb_recon_path_win +" "+OBJFPath+" "+ReebFilename)
+	else:	#everything else
+		os.system(reeb_recon_path_unix +" "+OBJFPath+" "+ReebFilename)
 
 #------------------------REEB GRAPH CONVERSION RELATED HELPER FUNCTIONS--------
 # here we have the reeb file to graphviz function i guess?
