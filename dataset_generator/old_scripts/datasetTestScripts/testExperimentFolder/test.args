@@ -1,0 +1,32 @@
+//btw, these comments are not c-style, they only work at the start of the line!
+//this would contain an error, if both OBJ and CONN/GEO are defined
+//modelObj: test.obj  
+//the config file ALWAYS starts at the top level, so any params defined here belong to top level scope
+
+modelConn: testconn.txt
+modelGeo: testgeo.txt
+
+//this is for the function files, as they are contained in a sub-list, this leaves top level scope
+funcFiles::
+func1.txt
+func2.txt
+func3.txt
+
+//few examples of function parameters defined below, each of which exist in their own sub scope
+//i may want the ablity to instantiate multiple instances of the noise function... however the current implementation doesnt allow that
+noiseParams::
+amplitude: 1.0
+
+gauss2dParams::
+amplitude: 1.0
+stddev: 1.0, 2.0
+pos: 1.1, 2.2
+
+gauss3dParams::
+amplitude: 1.0
+stddev: 1.0, 2.0, 3.0
+pos: 1.1, 2.2, 3.0
+
+//here we leave the current sub-scope, gauss3d, and enter back into top level scope
+::
+emptyFuncCount: 2

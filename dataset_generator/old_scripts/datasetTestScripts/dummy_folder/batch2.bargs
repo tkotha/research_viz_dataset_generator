@@ -1,0 +1,6 @@
+//this is like the normal experiment args file, but we denote 'bargs' here to mean batch arguments
+//thus, all commands are exclusive to organizing batched experiments
+//for now, all it means to batch something is to provide a giant list of all command strings we care to use for the given batch. These strings will include details like what path we want to use, and what arg file we may want to use, along with other pertinent details regarding a specific experiment we may want to tweak later on
+batches::
+path:testExperimentFolder argFile:test.args
+path:testExperimentFolder argFile:test.args
