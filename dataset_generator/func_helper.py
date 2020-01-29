@@ -430,9 +430,9 @@ def ProcessScaleGauss(vertices, highResVertMap, args):
 # // repeat = 500
 # // isRandomPerTrial = True
 # // isVertRandom = True
-# // APrimeDist = .15   #this is actually a derived attribute
-# // A1PrimeDist = .55
-# // A0PrimeDist = .05
+# // APrimeDist = .15   
+# // A1PrimeDist = .55  #this is actually a derived attribute
+# // A0PrimeDist = .05  #this is actually a derived attribute
 # // desiredSNR = 5
 # // numOfFeatures = 2
 # // fixedAmplitude = 1.0
@@ -443,6 +443,8 @@ def ProcessPositionalGauss3Points(vertices, highResVertMap, args):
 	sRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
 	isVertRandom = ValidateDictValue("isVertRandom", args, False)
 	APrimeDist = ValidateDictValue("APrimeDist", args, 1.0)
+	A0PrimeDist = ValidateDictValue("A0PrimeDist", args, 1.0)
+	A1PrimeDist = ValidateDictValue("A1PrimeDist", args, 1.0)
 	# APrimeDistInc - I dont think I use this here...
 	desiredSNR = ValidateDictValue("desiredSNR", args, 5)
 	if "numOfFeatures" in args:
@@ -512,8 +514,8 @@ def ProcessPositionalGauss3Points(vertices, highResVertMap, args):
 			bsum += Process3DGaussOnePoint(vert, highResVertMap[b]["pos"], fixedAmplitude, fixedStdVec)
 
 		asum = Process3DGaussOnePoint(vert, highResVertMap[a_point]["pos"], fixedAmplitude, fixedStdVec)
-		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], fixedAmplitude, fixedStdVec)
-		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], fixedAmplitude, fixedStdVec)
+		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime0_point]["pos"], fixedAmplitude, fixedStdVec)
+		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime1_point]["pos"], fixedAmplitude, fixedStdVec)
 
 		gaussA_total = bsum + asum
 		gaussA_prime0_total = bsum + a_prime0_sum

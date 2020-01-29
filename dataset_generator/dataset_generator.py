@@ -290,15 +290,32 @@ def handleArgsFile(path, argfile, verbose = True):
 			enable_sub_folder = True
 			function_folder = metadata["function-name"]
 			category_folder = "APrimeDist"
-			os.makedirs(copyPath, exist_ok=True)
+			if copyPath != "":
+				os.makedirs(copyPath, exist_ok=True)
 
 			if trial_i == 0:
-				copyfile(modeljsonpath+".zip", os.path.join(copyPath, getFileNameText(modeljsonpath) +".zip"))
+				if copyPath != "":
+					copyfile(modeljsonpath+".zip", os.path.join(copyPath, getFileNameText(modeljsonpath) +".zip"))
 
 			reeb_file_ext = getFileNameText(reebjson_min).split('_')[-1]
 			iso_file_ext = getFileNameText(isojson_min).split('_')[-1]
 			func_file_ext = getFileNameText(funcjson_min).split('_')[-1]
 			pd_file_ext = getFileNameText(pdjson_min).split('_')[-1]
+
+			stub = ""
+			a0p = ""
+			a1p = ""
+			stub = ""
+			if "A0PrimeDist" in metadata["metadata"]:
+				a0p = str(metadata["metadata"]["A0PrimeDist"]).replace('.',"dot")
+			if "A1PrimeDist" in metadata["metadata"]:
+				a1p = str(metadata["metadata"]["A1PrimeDist"]).replace('.',"dot")
+			nof = str(metadata["metadata"]["numOfFeatures"])
+			snr = str(int(metadata["metadata"]["desiredSNR"]))
+			if a0p != "" and a1p != "":
+				stub = "snr_"+snr+"_nof_"+nof+"_a0p_"+a0p+"_a1p_"+a1p+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
+			else:
+				stub = "snr_"+snr+"_nof_"+nof+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
 
 			if copyPath != "":
 				copyreeb = ""
@@ -307,22 +324,7 @@ def handleArgsFile(path, argfile, verbose = True):
 				copypd = ""
 
 				if enable_sub_folder:
-					print(metadata)
-					a0p = ""
-					a1p = ""
-					stub = ""
-					if "A0PrimeDist" in metadata["metadata"]:
-						a0p = str(metadata["metadata"]["A0PrimeDist"])
-					if "A1PrimeDist" in metadata["metadata"]:
-						a1p = str(metadata["metadata"]["A1PrimeDist"])
-					nof = str(metadata["metadata"]["numOfFeatures"])
-					snr = str(int(metadata["metadata"]["desiredSNR"]))
-					if a0p != "" and a1p != "":
-						stub = "snr_"+snr+"_nof_"+nof+"_a0p_"+a0p+"_a1p_"+a1p+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
-					else:
-						stub = "snr_"+snr+"_nof_"+nof+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
-
-
+					# print(metadata)
 					copysubpath1 = os.path.join(copyPath, function_folder)
 					if not os.path.exists(copysubpath1):
 						os.mkdir(copysubpath1)
@@ -346,7 +348,24 @@ def handleArgsFile(path, argfile, verbose = True):
 				copyfile(funcjson_min, copyfunc)
 				copyfile(pdjson_min, copypd)
 
+			#copy it to a local folder here too so that we get similar results
 
+			path_folder1 = os.path.join(path, function_folder)
+			if not os.path.exists(path_folder1):
+				os.mkdir(path_folder1)
+			path_folder2 = os.path.join(path_folder1, category_folder + "_"+str(metadata["metadata"][category_folder]).replace(".","dot"))
+			if not os.path.exists(path_folder2):
+				os.mkdir(path_folder2)
+
+			localcopyreeb = 	os.path.join(path_folder2, stub+reeb_file_ext)
+			localcopyiso = 		os.path.join(path_folder2, stub+iso_file_ext)
+			localcopyfunc = 	os.path.join(path_folder2, stub+func_file_ext)
+			localcopypd = 		os.path.join(path_folder2, stub+pd_file_ext)
+
+			copyfile(reebjson_min,	localcopyreeb)
+			copyfile(isojson_min, 	localcopyiso)
+			copyfile(funcjson_min, 	localcopyfunc)
+			copyfile(pdjson_min, 	localcopypd)
 
 
 	# after this, do any final touchup work that needs to be done, quick conversions, extension corrections, etc.
@@ -360,6 +379,11 @@ def handleArgsFile(path, argfile, verbose = True):
 	DeleteUnnecessaryFiles(os.path.join(path, "*.txt"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*.json"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*.rg"))
+	DeleteUnnecessaryFiles(os.path.join(path, "*reeb.json.zip"))
+	DeleteUnnecessaryFiles(os.path.join(path, "*iso.json.zip"))
+	DeleteUnnecessaryFiles(os.path.join(path, "*func.json.zip"))
+	DeleteUnnecessaryFiles(os.path.join(path, "*pd.json.zip"))
+	DeleteUnnecessaryFiles(os.path.join(path, "*.csv"))
 	pass
 
 
