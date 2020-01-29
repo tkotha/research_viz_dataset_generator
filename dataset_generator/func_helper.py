@@ -218,6 +218,113 @@ def ProcessScaleGauss3Points(vertices, highResVertMap, args):
 		numOfFeatures = int(random.choice(ValidateDictValue("numOfFeaturesRange", args, [2, 10])))
 	else:
 		numOfFeatures = 2
+	noiseType = ValidateDictValue("noiseType", args, "perlin")
+	fixedAmplitude = ValidateDictValue("fixedAmplitude", args, 1.0)
+	fixedStdVec = ValidateDictValue("fixedStdVec", args, [1.0,1.0,1.0])
+	epsilon = ValidateDictValue("epsilon", args, .1)
+	b_points = []
+	while len(b_points) < numOfFeatures-1:
+		new_bpoint = random.choice(list(highResVertMap.keys()))
+		if new_bpoint not in b_points:
+			b_points.append(new_bpoint)
+
+	a_point = -1
+	while a_point == -1:
+		new_apoint = random.choice(list(highResVertMap.keys()))
+		if new_apoint not in b_points:
+			a_point = new_apoint
+	
+	#here the a_prime_point is much easier to calculate
+	a_prime0_point = a_point
+	a_prime1_point = a_point
+
+	perlin_verts_base = []
+	perlin_sum_base = 0.0
+
+	perlin_verts0 = []
+	perlin_sum0 = 0.0
+
+	perlin_verts1 = []
+	perlin_sum1 = 0.0
+
+	gaussA_verts_base = []
+	gaussA_sum_base = 0.0
+
+	gaussA_prime0_verts = []
+	gaussA_prime0_sum = 0.0
+
+	gaussA_prime1_verts = []
+	gaussA_prime1_sum = 0.0
+
+	for vi, vert in enumerate(vertices):
+		new_perlin_base = ProcessPerlin3DOnePoint(vert, 1.0, 1776)
+		new_perlin0 = ProcessPerlin3DOnePoint(vert, 1.0, 133)
+		new_perlin1 = ProcessPerlin3DOnePoint(vert, 1.0, 5620)
+
+		perlin_verts_base.append(new_perlin_base)
+		perlin_sum_base += new_perlin_base
+
+		perlin_verts0.append(new_perlin0)
+		perlin_sum0 += new_perlin0
+
+		perlin_verts1.append(new_perlin1)
+		perlin_sum1 += new_perlin1
+
+
+		bsum = 0
+		for b in b_points:
+			bsum += Process3DGaussOnePoint(vert, highResVertMap[b]["pos"], fixedAmplitude, fixedStdVec)
+
+		asum = Process3DGaussOnePoint(vert, highResVertMap[a_point]["pos"], fixedAmplitude, fixedStdVec)
+		#we may need to change the formula here to fixedAmplitude - Aprimedist? we want to get the difference between the prior amplitude, but b4, it wouldve just given us the global value
+		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], max(0, fixedAmplitude - A0PrimeDist), fixedStdVec)
+		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], max(0, fixedAmplitude - A1PrimeDist), fixedStdVec)
+
+		gaussA_total = bsum + asum
+		gaussA_prime0_total = bsum + a_prime0_sum
+		gaussA_prime1_total = bsum + a_prime1_sum
+
+		gaussA_verts_base.append(gaussA_total)
+		gaussA_sum_base += gaussA_total
+
+		gaussA_prime0_verts.append(gaussA_prime0_total)
+		gaussA_prime0_sum += gaussA_prime0_total
+
+		gaussA_prime1_verts.append(gaussA_prime1_total)
+		gaussA_prime1_sum += gaussA_prime1_total
+
+	perlin_identical = True
+	for pi, perlb in enumerate(perlin_verts_base):
+		perl0 = perlin_verts0 [pi]
+		perl1 = perlin_verts1 [pi]
+		if perl0 != perl1 or perl1 != perlb or perlb != perl0:
+			perlin_identical = False
+			break
+
+	assert perlin_identical == False
+
+	SNRA = float(gaussA_sum_base)/float(perlin_sum_base)
+	alpha = SNRA/desiredSNR
+
+
+	func1 = []
+	func2 = []
+	func3 = []
+	for gi, gaussA_base in enumerate(gaussA_verts_base):
+		gaussA_prime0 = gaussA_prime0_verts[gi]
+		gaussA_prime1 = gaussA_prime1_verts[gi]
+
+		perlin_base = perlin_verts_base[gi]
+		perlin0 = perlin_verts0[gi]
+		perlin1 = perlin_verts1[gi]
+
+		func1.append(gaussA_base + perlin_base * alpha)
+		func2.append(gaussA_prime0 + perlin0 * alpha)
+		func3.append(gaussA_prime1 + perlin1 * alpha)
+
+
+	return [func1, func2, func3]
+
 
 def ProcessScaleGauss(vertices, highResVertMap, args):
 	isRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
@@ -332,6 +439,126 @@ def ProcessScaleGauss(vertices, highResVertMap, args):
 # // fixedStdVec = 1.0, 1.0, 1.0
 # // noiseType = perlin
 # // epsilon = .1
+def ProcessPositionalGauss3Points(vertices, highResVertMap, args):
+	sRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
+	isVertRandom = ValidateDictValue("isVertRandom", args, False)
+	APrimeDist = ValidateDictValue("APrimeDist", args, 1.0)
+	# APrimeDistInc - I dont think I use this here...
+	desiredSNR = ValidateDictValue("desiredSNR", args, 5)
+	if "numOfFeatures" in args:
+		numOfFeatures = ValidateDictValue("numOfFeatures", args, 2)
+	elif "numOfFeaturesRange" in args:
+		numOfFeatures = int(random.choice(ValidateDictValue("numOfFeaturesRange", args, [2, 10])))
+	else:
+		numOfFeatures = 2
+	noiseType = ValidateDictValue("noiseType", args, "perlin")
+	fixedAmplitude = ValidateDictValue("fixedAmplitude", args, 1.0)
+	fixedStdVec = ValidateDictValue("fixedStdVec", args, [1.0,1.0,1.0])
+	epsilon = ValidateDictValue("epsilon", args, .1)
+	b_points = []
+
+	while len(b_points) < numOfFeatures-1:
+		new_bpoint = random.choice(list(highResVertMap.keys()))
+		if new_bpoint not in b_points:
+			b_points.append(new_bpoint)
+
+	a_point = -1
+	while a_point == -1:
+		new_apoint = random.choice(list(highResVertMap.keys()))
+		if new_apoint not in b_points:
+			a_point = new_apoint
+
+	#here the a_prime_point is much easier to calculate
+	a_prime0_point = GetGeodesicPointFromDist(highResVertMap, a_point, A0PrimeDist, epsilon)
+	assert a_prime0_point != -1
+	a_prime1_point = GetGeodesicPointFromDist(highResVertMap, a_point, A1PrimeDist, epsilon)
+	assert a_prime1_point != -1
+
+	perlin_verts_base = []
+	perlin_sum_base = 0.0
+
+	perlin_verts0 = []
+	perlin_sum0 = 0.0
+
+	perlin_verts1 = []
+	perlin_sum1 = 0.0
+
+	gaussA_verts_base = []
+	gaussA_sum_base = 0.0
+
+	gaussA_prime0_verts = []
+	gaussA_prime0_sum = 0.0
+
+	gaussA_prime1_verts = []
+	gaussA_prime1_sum = 0.0
+
+	for vi, vert in enumerate(vertices):
+		new_perlin_base = ProcessPerlin3DOnePoint(vert, 1.0, 1776)
+		new_perlin0 = ProcessPerlin3DOnePoint(vert, 1.0, 133)
+		new_perlin1 = ProcessPerlin3DOnePoint(vert, 1.0, 5620)
+
+		perlin_verts_base.append(new_perlin_base)
+		perlin_sum_base += new_perlin_base
+
+		perlin_verts0.append(new_perlin0)
+		perlin_sum0 += new_perlin0
+
+		perlin_verts1.append(new_perlin1)
+		perlin_sum1 += new_perlin1
+
+
+		bsum = 0
+		for b in b_points:
+			bsum += Process3DGaussOnePoint(vert, highResVertMap[b]["pos"], fixedAmplitude, fixedStdVec)
+
+		asum = Process3DGaussOnePoint(vert, highResVertMap[a_point]["pos"], fixedAmplitude, fixedStdVec)
+		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], fixedAmplitude, fixedStdVec)
+		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], fixedAmplitude, fixedStdVec)
+
+		gaussA_total = bsum + asum
+		gaussA_prime0_total = bsum + a_prime0_sum
+		gaussA_prime1_total = bsum + a_prime1_sum
+
+		gaussA_verts_base.append(gaussA_total)
+		gaussA_sum_base += gaussA_total
+
+		gaussA_prime0_verts.append(gaussA_prime0_total)
+		gaussA_prime0_sum += gaussA_prime0_total
+
+		gaussA_prime1_verts.append(gaussA_prime1_total)
+		gaussA_prime1_sum += gaussA_prime1_total
+
+	perlin_identical = True
+	for pi, perlb in enumerate(perlin_verts_base):
+		perl0 = perlin_verts0 [pi]
+		perl1 = perlin_verts1 [pi]
+		if perl0 != perl1 or perl1 != perlb or perlb != perl0:
+			perlin_identical = False
+			break
+
+	assert perlin_identical == False
+
+	SNRA = float(gaussA_sum_base)/float(perlin_sum_base)
+	alpha = SNRA/desiredSNR
+
+
+	func1 = []
+	func2 = []
+	func3 = []
+	for gi, gaussA_base in enumerate(gaussA_verts_base):
+		gaussA_prime0 = gaussA_prime0_verts[gi]
+		gaussA_prime1 = gaussA_prime1_verts[gi]
+
+		perlin_base = perlin_verts_base[gi]
+		perlin0 = perlin_verts0[gi]
+		perlin1 = perlin_verts1[gi]
+
+		func1.append(gaussA_base + perlin_base * alpha)
+		func2.append(gaussA_prime0 + perlin0 * alpha)
+		func3.append(gaussA_prime1 + perlin1 * alpha)
+
+
+	return [func1, func2, func3]
 
 def ProcessPositionalGauss(vertices, highResVertMap, args):
 	isRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
@@ -363,7 +590,7 @@ def ProcessPositionalGauss(vertices, highResVertMap, args):
 			a_point = new_apoint
 
 	a_prime_point = GetGeodesicPointFromDist(highResVertMap, a_point, APrimeDist, epsilon)
-	assert a_prime_point != 1
+	assert a_prime_point != -1
 
 	perlin_verts1 = []
 	perlin_sum1 = 0.0
@@ -443,6 +670,6 @@ func_table = {
 	"z" : ProcessZ,
 	"y" : ProcessY,
 	"x" : ProcessX,
-	"positionGauss": ProcessPositionalGauss,
-	"scaleGauss": ProcessScaleGauss
+	"positionGauss": ProcessPositionalGauss3Points,
+	"scaleGauss": ProcessScaleGauss3Points
 }
