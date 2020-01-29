@@ -66,7 +66,7 @@ def ProcessSaltPepperNoise(vertices, highResVertMap, args, PRECISION = 6):
 	Amplitude = ValidateDictValue("amplitude", args, 1)
 	for i in range(0,len(vertices)):
 		func.append(round(random.uniform(-Amplitude, Amplitude),PRECISION))
-	return [func]
+	return [func, func]
 
 
 #Gauss functions
@@ -93,7 +93,7 @@ def Process3DGauss(vertices, highResVertMap, args):
 		ypart = numpy.power(vertex[1] - position[1], 2)/ (2*numpy.power(stdvy,2))
 		zpart = numpy.power(vertex[2] - position[2], 2)/ (2*numpy.power(stdvz,2))
 		func.append(Amplitude * numpy.exp(-(xpart + ypart + zpart)))
-	return [func]
+	return [func, func]
 
 def Process3DGaussOnePoint(vertex, position, amplitude, standard_deviation):
 	xpart = numpy.power(vertex[0] - position[0], 2)/ (2*numpy.power(standard_deviation[0], 2))
@@ -123,7 +123,7 @@ def Process2DGauss(vertices, highResVertMap, args):
 		xpart = numpy.power(vertex[0] - position[0], 2)/ (2*numpy.power(stdvx,2))
 		ypart = numpy.power(vertex[1] - position[1], 2)/ (2*numpy.power(stdvy,2))
 		func.append(Amplitude * numpy.exp(-(xpart + ypart)))
-	return [func]
+	return [func, func]
 
 
 #here is where we generate the empty func -- pretty stupid, but whatever
@@ -132,25 +132,25 @@ def ProcessEmpty(vertices, highResVertMap, args):
 	func = []
 	for i in range(0, len(vertices)):
 		func.append(0)
-	return [func]
+	return [func, func]
 
 def ProcessZ(vertices, highResVertMap, args):
 	func = []
 	for i in range(0, len(vertices)):
 		func.append(vertices[i][2])
-	return [func]
+	return [func, func]
 
 def ProcessY(vertices, highResVertMap, args):
 	func = []
 	for i in range(0, len(vertices)):
 		func.append(vertices[i][1])
-	return [func]
+	return [func, func]
 
 def ProcessX(vertices, highResVertMap, args):
 	func = []
 	for i in range(0, len(vertices)):
 		func.append(vertices[i][0])
-	return [func]
+	return [func, func, func]
 
 def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 	vA = VertMap[vid]
@@ -195,7 +195,9 @@ def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 # // repeat = 500
 # // isRandomPerTrial = True
 # // isVertRandom = True
-# // APrimeDist = .15
+# // APrimeDist = .15   #this is actually a derived attribute
+# // A1PrimeDist = .55
+# // A0PrimeDist = .05
 # // desiredSNR = 5
 # // numOfFeatures = 2
 # // fixedAmplitude = 1.0
@@ -203,6 +205,19 @@ def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 # // noiseType = perlin
 # // epsilon = .1
 
+def ProcessScaleGauss3Points(vertices, highResVertMap, args):
+	isRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
+	isVertRandom = ValidateDictValue("isVertRandom", args, False)
+	APrimeDist = ValidateDictValue("APrimeDist", args, 1.0)
+	A1PrimeDist = ValidateDictValue("A1PrimeDist", args, 1.0)
+	A0PrimeDist = ValidateDictValue("A0PrimeDist", args, 1.0)
+	desiredSNR = ValidateDictValue("desiredSNR", args, 5)
+	if "numOfFeatures" in args:
+		numOfFeatures = ValidateDictValue("numOfFeatures", args, 2)
+	elif "numOfFeaturesRange" in args:
+		numOfFeatures = int(random.choice(ValidateDictValue("numOfFeaturesRange", args, [2, 10])))
+	else:
+		numOfFeatures = 2
 
 def ProcessScaleGauss(vertices, highResVertMap, args):
 	isRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
@@ -308,7 +323,9 @@ def ProcessScaleGauss(vertices, highResVertMap, args):
 # // repeat = 500
 # // isRandomPerTrial = True
 # // isVertRandom = True
-# // APrimeDist = .5
+# // APrimeDist = .15   #this is actually a derived attribute
+# // A1PrimeDist = .55
+# // A0PrimeDist = .05
 # // desiredSNR = 5
 # // numOfFeatures = 2
 # // fixedAmplitude = 1.0

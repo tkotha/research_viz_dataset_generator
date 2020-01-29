@@ -371,8 +371,8 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 			edgeChecklist = []
 			curmaxpath = 0
 			for e in band.edgeList:
-				#schema: start index, end index, was processed?, centroidList, contouridlist, has_candidate?, starting_maxpath
-				edgeChecklist.append([e[0],e[1], False, [], [], False, maxpaths[curmaxpath]])
+				#schema: start index, end index, was processed?, centroidList, contouridlist, has_candidate?, starting_maxpath, resulting walkpath
+				edgeChecklist.append([e[0],e[1], False, [], [], False, maxpaths[curmaxpath], None])
 				curmaxpath = (curmaxpath + 1) % len(maxpaths)
 			
 			#we will be doing contour grouping in two passes
@@ -442,29 +442,33 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 				# ContourData, ContourIDList =  CreateBFSBasedCentroidsByWalk(candidate, tvmap) # GroupContoursByWalk(arcData.contourData, candidate, tvmap)
 				isDuplicate = False
 				#first, start by seeing if we can eliminate any duplicate walks
+				#it looks like this whole system is invalid now, b/c our contour ids are useless in the current context
+				#basically, expect duplicate walks to show up
 				for e in edgeChecklist:
 					if start_reebvert_id == e[0] and end_reebvert_id == e[1] and e[2]:
 						checkContourIDList = e[4]
+						
 						if len(checkContourIDList) == len(ContourIDList):
-							#perform our match check
-							isMatch = True
-							for i,c in enumerate(ContourIDList):
-								if c != checkContourIDList[i]:
-									isMatch = False
+							# #perform our match check, actually this is invalid now, b/c we did away with centroid ids
+							# isMatch = True
+							# for i,c in enumerate(ContourIDList):
+							# 	if c != checkContourIDList[i]:
+							# 		isMatch = False
 
-							if isMatch:
-								isDuplicate = True
-								break
+							# if isMatch:
+							# 	isDuplicate = True
+							# 	break
 							
-							#perform our similarity check
-							sameCount = 0
-							for i,c in enumerate(ContourIDList):
-								if c == checkContourIDList[i]: 
-									sameCount += 1
-							sameRatio = float(sameCount)/float(len(ContourIDList))
-							if sameRatio > .875:	#we're basically picking a ratio that is extremely similar
-								isDuplicate = True
-								break
+							# #perform our similarity check
+							# sameCount = 0
+							# for i,c in enumerate(ContourIDList):
+							# 	if c == checkContourIDList[i]: 
+							# 		sameCount += 1
+							# sameRatio = float(sameCount)/float(len(ContourIDList))
+							# if sameRatio > .875:	#we're basically picking a ratio that is extremely similar
+							# 	isDuplicate = True
+							# 	break
+							pass
 
 				#only if we are not a duplicate, carry on with our checks. Note that even here we may not be garaunteed a spot, b/c it's possible we have extraneous walks
 				if not isDuplicate:
@@ -474,6 +478,8 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 							e[3] = ContourData
 							e[4] = ContourIDList
 							break
+				else:
+					print("Reject arc! it is too similar to another one!")
 
 			#now at the end of our checklist, for now we want to be sure that ALL edges have been addressed
 			allFilled = True
@@ -1425,7 +1431,17 @@ def CreateCentroidsByWalk(ReebWalk, TVMap, WalkCentroidRate = 12):
 	final_contour_list = []
 	final_contour_id_list = []
 	print("Contour List Length: "+str(len(contour_list)))
-	assert len(contour_list) != 0
+	#in the extreme case that we have no contours at all, just calculate a midpoint
+	if len(contour_list) != 0:
+		print("Failed to find a contour set! Resorting to simple midpoint")
+		vs = TVMap["verts"][start_reeb_id]
+		ve = TVMap["verts"][end_reeb_id]
+		target_iso = (vs.iso + ve.iso)/2.0
+		midpoint = [(vs.vpos[0] + ve.vpos[0])/2.0, \
+					(vs.vpos[1] + ve.vpos[1])/2.0, \
+					(vs.vpos[2] + ve.vpos[2])/2.0 ]
+		contour_list.append([midpoint[0], midpoint[1], midpoint[2], target_iso, -1])
+
 
 	for con in contour_list:
 		final_contour_list.append([con[0], con[1], con[2], con[3]])

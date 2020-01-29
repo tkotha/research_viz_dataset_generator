@@ -45,7 +45,7 @@ def resolveParameter_Unsafe(arg, value):
 		return parseFloatVector(value)
 	if arg in ["numOfFeaturesRange"]:
 		return parseIntVector(value)
-	elif arg in ["contour_grouping_epsilon", "epsilon", "amplitude", "desiredSNR", "APrimeDist", "APrimeDistInc", "fixedScale", "fixedAmplitude"]:
+	elif arg in ["contour_grouping_epsilon", "epsilon", "amplitude", "desiredSNR", "APrimeDist", "A0PrimeDist", "A1PrimeDist", "APrimeDistInc", "fixedScale", "fixedAmplitude"]:
 		return float(value)
 	elif arg in ["grouping_strategy", "repeat",  "numOfFeatures"]:
 		return int(value)

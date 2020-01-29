@@ -265,10 +265,12 @@ def handleArgsFile(path, argfile, verbose = True):
 			combined_iso_json.append(metadata)
 			combined_func_json.append(metadata)
 			combined_pd_json.append(metadata)
-			assert len(combined_reeb_json) == 3
-			assert len(combined_pd_json) == 3
-			assert len(combined_iso_json) == 3
-			assert len(combined_func_json) == 3
+
+			# sadly this assertion no longer makes sense
+			# assert len(combined_reeb_json) == 3
+			# assert len(combined_pd_json) == 3
+			# assert len(combined_iso_json) == 3
+			# assert len(combined_func_json) == 3
 
 			with open(isopath, 'w') as isojson, open(reebpath, 'w') as reebjson, open(funcpath, 'w') as funcjson, open(pdpath,'w') as pdjson:
 				# reeb_json = datasets[0]["reeb"][0]
@@ -306,9 +308,19 @@ def handleArgsFile(path, argfile, verbose = True):
 
 				if enable_sub_folder:
 					print(metadata)
+					a0p = ""
+					a1p = ""
+					stub = ""
+					if "A0PrimeDist" in metadata["metadata"]:
+						a0p = str(metadata["metadata"]["A0PrimeDist"])
+					if "A1PrimeDist" in metadata["metadata"]:
+						a1p = str(metadata["metadata"]["A1PrimeDist"])
 					nof = str(metadata["metadata"]["numOfFeatures"])
 					snr = str(int(metadata["metadata"]["desiredSNR"]))
-					stub = "snr_"+snr+"_nof_"+nof+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
+					if a0p != "" and a1p != "":
+						stub = "snr_"+snr+"_nof_"+nof+"_a0p_"+a0p+"_a1p_"+a1p+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
+					else:
+						stub = "snr_"+snr+"_nof_"+nof+"_"+metadata["model-name"]+"_"+metadata["function-name"]+"_"
 
 
 					copysubpath1 = os.path.join(copyPath, function_folder)
