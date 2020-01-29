@@ -74,7 +74,7 @@ def handleBargsFile(path, bargfile, verbose = False):
 			handleArgsFile(os.path.join(fileargs["path"],b["path"]), b["arg-file"])
 		print("--- done handling "+b["path"]+" ---")
 
-def handleArgsFile(path, argfile, verbose = True):
+def handleArgsFile(path, argfile, verbose = False):
 	#check for argfile validity
 	files = getFiles(path, "args")
 	target_argfile = argFileValidity(files, argfile)
