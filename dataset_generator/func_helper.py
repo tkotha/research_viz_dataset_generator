@@ -152,6 +152,7 @@ def ProcessX(vertices, highResVertMap, args):
 		func.append(vertices[i][0])
 	return [func, func, func]
 
+#does this really need to return an id? how about just a point?
 def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 	vA = VertMap[vid]
 	vApos = vA["pos"]
@@ -169,25 +170,23 @@ def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 				npos = VertMap[n]["pos"]
 				dist = numpy.sqrt(numpy.power(curpos[0] - npos[0], 2) + numpy.power(curpos[1] - npos[1], 2) +numpy.power(curpos[2] - npos[2], 2))
 				if curdist + dist >= radius:
-					candidate_list.append([n, curdist+dist, \
+					#get the projected point
+					leftoverDist = abs(radius - curdist)
+					#now get the projected point
+					candidate_point = [(npos[0] - curpos[0])/dist,  (npos[1] - curpos[1])/dist, (npos[2] - curpos[2])/dist]
+					candidate_point = [ curpos[0] + candidate_point[0]*leftoverDist, \
+									    curpos[1] + candidate_point[1]*leftoverDist, \
+									    curpos[2] + candidate_point[2]*leftoverDist]
+					candidate_list.append([n, candidate_point, curdist+dist, \
 						numpy.sqrt(numpy.power(vApos[0] - npos[0], 2) + numpy.power(vApos[1] - npos[1], 2) +numpy.power(vApos[2] - npos[2], 2))])
 				else:
 					q.append([n, curdist+dist])
 
-	#now weed out candidates
-	new_candidate_list = []
-	#i will allow for points greater than our specified radius, only because the density of the meshes is very high, so it'd be a slight perturbation
-	last_resort_candidate_list = []
-	for c in candidate_list:
-		if c[1] >= radius - Epsilon and c[1] <= radius + Epsilon:
-			new_candidate_list.append(c[0])
-		elif c[1] > radius + Epsilon:
-			last_resort_candidate_list.append(c[0])
 
-	if len(new_candidate_list) != 0:
-		return random.choice(new_candidate_list)
-	# elif len(last_resort_candidate_list) != 0:
-	# 	return random.choice(last_resort_candidate_list)
+	#since all points given are projected to us, we can just select them as we wish.
+	#now if we get an assertion failure, it should only be because the BFS walk ENTIRELY FAILED
+	if len(candidate_list != 0):
+		return candidate_list[random.randrange(0, len(candidate_list))][1]
 	else: return -1
 
 
@@ -514,8 +513,8 @@ def ProcessPositionalGauss3Points(vertices, highResVertMap, args):
 			bsum += Process3DGaussOnePoint(vert, highResVertMap[b]["pos"], fixedAmplitude, fixedStdVec)
 
 		asum = Process3DGaussOnePoint(vert, highResVertMap[a_point]["pos"], fixedAmplitude, fixedStdVec)
-		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime0_point]["pos"], fixedAmplitude, fixedStdVec)
-		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime1_point]["pos"], fixedAmplitude, fixedStdVec)
+		a_prime0_sum = Process3DGaussOnePoint(vert, a_prime0_point, fixedAmplitude, fixedStdVec)
+		a_prime1_sum = Process3DGaussOnePoint(vert, a_prime1_point, fixedAmplitude, fixedStdVec)
 
 		gaussA_total = bsum + asum
 		gaussA_prime0_total = bsum + a_prime0_sum
@@ -622,7 +621,7 @@ def ProcessPositionalGauss(vertices, highResVertMap, args):
 			bsum += Process3DGaussOnePoint(vert, highResVertMap[b]["pos"], fixedAmplitude, fixedStdVec)
 
 		asum = Process3DGaussOnePoint(vert, highResVertMap[a_point]["pos"], fixedAmplitude, fixedStdVec)
-		a_prime_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime_point]["pos"], fixedAmplitude, fixedStdVec)
+		a_prime_sum = Process3DGaussOnePoint(vert, a_prime_point, fixedAmplitude, fixedStdVec)
 
 		gaussA_total = bsum + asum
 		gaussA_prime_total = bsum + a_prime_sum
