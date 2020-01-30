@@ -154,6 +154,7 @@ def ProcessX(vertices, highResVertMap, args):
 
 #does this really need to return an id? how about just a point?
 def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
+	radius = radius *.1
 	vA = VertMap[vid]
 	vApos = vA["pos"]
 	candidate_list = []
