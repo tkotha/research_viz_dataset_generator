@@ -185,7 +185,7 @@ def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 
 	#since all points given are projected to us, we can just select them as we wish.
 	#now if we get an assertion failure, it should only be because the BFS walk ENTIRELY FAILED
-	if len(candidate_list != 0):
+	if len(candidate_list) != 0:
 		return candidate_list[random.randrange(0, len(candidate_list))][1]
 	else: return -1
 
