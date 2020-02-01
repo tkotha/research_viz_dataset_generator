@@ -26,7 +26,7 @@ def createReebFile(OBJFPath, ReebFilename):
 def ReebFileToPDPair(ReebGraphPath):
 	#handle the really odd case regarding windows paths not handling \\ correctly
 	pdpairpath = ReebGraphPath.replace("\\","/")
-	os.system(pair_jar_path+" "+pdpairpath)
+	os.system("java -jar " +pair_jar_path+" "+pdpairpath)
 	reebname = ntpath.basename(ReebGraphPath)
 	reebfilename = os.path.splitext(reebname)[0]
 	reebext = os.path.splitext(reebname)[1]
