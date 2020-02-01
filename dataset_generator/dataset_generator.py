@@ -133,7 +133,7 @@ def handleArgsFile(path, argfile, verbose = False):
 		list of experiments
 		experiment is a list of func,reeb pairings for each result of func_result
 	'''
-
+	print("Start generating!")
 	for i,func in enumerate(fileargs["func-list"]):
 		#if we have more specific cases, like invocation specific arguments, we'd also check that here
 		#now we check for the filename, if it doesnt exist, we generate one
@@ -381,6 +381,7 @@ def handleArgsFile(path, argfile, verbose = False):
 	pass
 
 def DeleteAlotOfFiles(path):
+	print("Deleting files...")
 	DeleteUnnecessaryFiles(os.path.join(path, "*_compressed.json.gz"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*.objf"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*_minify.json"))
@@ -399,6 +400,7 @@ def DeleteUnnecessaryFiles(filepathPattern):
 	fileList = glob.glob(filepathPattern)
 	for filepath in fileList:
 		try:
+			print("deleting " + filepath)
 			os.remove(filepath)
 		except:
 			print("Error while deleting file: " + filepath)
