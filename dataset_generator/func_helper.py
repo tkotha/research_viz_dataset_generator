@@ -301,7 +301,8 @@ def ProcessScaleGauss3Points(vertices, highResVertMap, args):
 			perlin_identical = False
 			break
 
-	assert perlin_identical == False
+	if perlin_identical != False:
+		return None
 
 	SNRA = float(gaussA_sum_base)/float(perlin_sum_base)
 	alpha = SNRA/desiredSNR
@@ -404,7 +405,8 @@ def ProcessScaleGauss(vertices, highResVertMap, args):
 		if perl2 != perl1:
 			perlin_identical = False
 
-	assert perlin_identical == False
+	if perlin_identical != False:
+		return None
 
 	SNRA = gaussA_sum/perlin_sum1
 	alpha = SNRA/desiredSNR
@@ -472,9 +474,11 @@ def ProcessPositionalGauss3Points(vertices, highResVertMap, args):
 
 	#here the a_prime_point is much easier to calculate
 	a_prime0_point = GetGeodesicPointFromDist(highResVertMap, a_point, A0PrimeDist, epsilon)
-	assert a_prime0_point != -1
+	if  a_prime0_point == -1:
+		return None
 	a_prime1_point = GetGeodesicPointFromDist(highResVertMap, a_point, A1PrimeDist, epsilon)
-	assert a_prime1_point != -1
+	if a_prime1_point == -1:
+		return None
 
 	perlin_verts_base = []
 	perlin_sum_base = 0.0
@@ -538,7 +542,8 @@ def ProcessPositionalGauss3Points(vertices, highResVertMap, args):
 			perlin_identical = False
 			break
 
-	assert perlin_identical == False
+	if perlin_identical != False:
+		return None
 
 	SNRA = float(gaussA_sum_base)/float(perlin_sum_base)
 	alpha = SNRA/desiredSNR
@@ -592,7 +597,8 @@ def ProcessPositionalGauss(vertices, highResVertMap, args):
 			a_point = new_apoint
 
 	a_prime_point = GetGeodesicPointFromDist(highResVertMap, a_point, APrimeDist, epsilon)
-	assert a_prime_point != -1
+	if a_prime_point == -1:
+		return None
 
 	perlin_verts1 = []
 	perlin_sum1 = 0.0
@@ -639,7 +645,8 @@ def ProcessPositionalGauss(vertices, highResVertMap, args):
 		if perl2 != perl1:
 			perlin_identical = False
 
-	assert perlin_identical == False
+	if perlin_identical != False:
+		return None
 
 	SNRA = gaussA_sum/perlin_sum1
 	alpha = SNRA/desiredSNR

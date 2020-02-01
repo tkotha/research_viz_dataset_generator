@@ -147,7 +147,13 @@ def handleArgsFile(path, argfile, verbose = False):
 			repeatCount = func_args["repeat"]
 		for repi in range(0, repeatCount):
 			#make sure to feed in the arguments and the vertices of the model
-			func_result = func_table[function](objModel[0], highresvertmap, func_args)
+			func_result = None
+			#basically we will keep repeating this until we get a good function!
+			while func_result == None:
+				print("Attempting function generation!")
+				func_result = func_table[function](objModel[0], highresvertmap, func_args)
+				if func_result == None:
+					print("Error occurred during function generation, retrying!")
 			# print(func_result)
 			funcname = func[1]
 			# if  funcname is "":
@@ -172,37 +178,11 @@ def handleArgsFile(path, argfile, verbose = False):
 				#here we enforce the constraint that each file must contain only 1 function
 				WriteSingleFunc(funcpath, fr)
 			func_organizer.append(func_experiment_organizer)
-		organizer.append(func_organizer)
-
-	print(organizer)
-	# go ahead and convert obj to json file. we wont need it, but the webcode might
-	modeljsonpath = os.path.splitext(objcheckpath)[0] + "_model.json"
-	convertOBJModelToJSON(objModel, modeljsonpath)
-
-	#once all the funcs have been generated, and we are sure that the func file list is now good to go
-	#it is time to go through the reeb list, and execute the following in order for each item:
-	'''
-		
-		convertFuncAndOBJToOBJF(testfolder + "geometry_connectivity_toObj.obj", testfolder + "data_t_small.txt")
-		createReebFile(testmodel+"f")
-		ReebFileToPDPair(testfolder+"geometry_connectivity_toObj_export.rg")
-		PDPairFileToCSV(testfolder +"pd0_geometry_connectivity_toObj_export.rg")
-	'''
-	#with this, the only thing we really need to change is how the json files are configured. What we need here are 2 functions side by side for comparison
-	#so the jsons need to reflect that
-	#we use the original convertFuncAndOBJtoJSON function to produce 2 datasets, using different functions as the input, and then package those things together into files that we export
-	#this means we need to modify that function to not handle the file writing, but instead do that here
-	#we need a way to map all generated reeb graphs to all possible functions (now we expect each function spec to do more than 1 function) automatically
-
-	#note that now we have done this, we cannot go back to the "old" way of processing data
-	#now we must push ahead to make sure a)the functions are implemented and return 2 functions at a time, b)that we get "side by side" json data, and c)each json experiment file loads correctly in the web code, one file, 2 visualizations
-
-	# for reeb in fileargs["reeb-list"]:
-
-	for func in organizer:
-		for trial_i, trial in enumerate(func):
-			print(trial)
-			print(trial[1])
+		#instead of using an organizer structure, we should just deal with the functions to generate directly here
+		# organizer.append(func_organizer)
+		for trial_i, trial in enumerate(func_organizer):
+			# print(trial)
+			# print(trial[1])
 			trialName = trial[0]
 			print("Trial Name: " + trialName)
 			#the point of iterating through ALL the experiments like this in a single trial, is to make sure we have the ablity to group them into jsons as needed
@@ -366,11 +346,41 @@ def handleArgsFile(path, argfile, verbose = False):
 			copyfile(isojson_min, 	localcopyiso)
 			copyfile(funcjson_min, 	localcopyfunc)
 			copyfile(pdjson_min, 	localcopypd)
+		DeleteAlotOfFiles(path)
 
+	
+	# go ahead and convert obj to json file. we wont need it, but the webcode might
+	modeljsonpath = os.path.splitext(objcheckpath)[0] + "_model.json"
+	convertOBJModelToJSON(objModel, modeljsonpath)
 
+	#once all the funcs have been generated, and we are sure that the func file list is now good to go
+	#it is time to go through the reeb list, and execute the following in order for each item:
+	'''
+		
+		convertFuncAndOBJToOBJF(testfolder + "geometry_connectivity_toObj.obj", testfolder + "data_t_small.txt")
+		createReebFile(testmodel+"f")
+		ReebFileToPDPair(testfolder+"geometry_connectivity_toObj_export.rg")
+		PDPairFileToCSV(testfolder +"pd0_geometry_connectivity_toObj_export.rg")
+	'''
+	#with this, the only thing we really need to change is how the json files are configured. What we need here are 2 functions side by side for comparison
+	#so the jsons need to reflect that
+	#we use the original convertFuncAndOBJtoJSON function to produce 2 datasets, using different functions as the input, and then package those things together into files that we export
+	#this means we need to modify that function to not handle the file writing, but instead do that here
+	#we need a way to map all generated reeb graphs to all possible functions (now we expect each function spec to do more than 1 function) automatically
+
+	#note that now we have done this, we cannot go back to the "old" way of processing data
+	#now we must push ahead to make sure a)the functions are implemented and return 2 functions at a time, b)that we get "side by side" json data, and c)each json experiment file loads correctly in the web code, one file, 2 visualizations
+
+	# for reeb in fileargs["reeb-list"]:
+
+	
 	# after this, do any final touchup work that needs to be done, quick conversions, extension corrections, etc.
 
 	#at this point, we should be done with the argfile, conserve space by deleting all tmp files
+	DeleteAlotOfFiles(path)
+	pass
+
+def DeleteAlotOfFiles(path):
 	DeleteUnnecessaryFiles(os.path.join(path, "*_compressed.json.gz"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*.objf"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*_minify.json"))
@@ -384,8 +394,6 @@ def handleArgsFile(path, argfile, verbose = False):
 	DeleteUnnecessaryFiles(os.path.join(path, "*func.json.zip"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*pd.json.zip"))
 	DeleteUnnecessaryFiles(os.path.join(path, "*.csv"))
-	pass
-
 
 def DeleteUnnecessaryFiles(filepathPattern):
 	fileList = glob.glob(filepathPattern)
