@@ -206,11 +206,12 @@ def GetGeodesicPointFromDist(VertMap, vid, radius, Epsilon):
 # // epsilon = .1
 
 def ProcessScaleGauss3Points(vertices, highResVertMap, args):
+	shiftAmount = .75
 	isRandomPerTrial = ValidateDictValue("isRandomPerTrial", args, False)
 	isVertRandom = ValidateDictValue("isVertRandom", args, False)
 	APrimeDist = ValidateDictValue("APrimeDist", args, 1.0)
-	A1PrimeDist = ValidateDictValue("A1PrimeDist", args, 1.0)
-	A0PrimeDist = ValidateDictValue("A0PrimeDist", args, 1.0)
+	A1PrimeDist = ValidateDictValue("A1PrimeDist", args, 1.0) - shiftAmount
+	A0PrimeDist = ValidateDictValue("A0PrimeDist", args, 1.0) - shiftAmount
 	desiredSNR = ValidateDictValue("desiredSNR", args, 5)
 	if "numOfFeatures" in args:
 		numOfFeatures = ValidateDictValue("numOfFeatures", args, 2)
@@ -277,8 +278,8 @@ def ProcessScaleGauss3Points(vertices, highResVertMap, args):
 
 		asum = Process3DGaussOnePoint(vert, highResVertMap[a_point]["pos"], fixedAmplitude, fixedStdVec)
 		#we may need to change the formula here to fixedAmplitude - Aprimedist? we want to get the difference between the prior amplitude, but b4, it wouldve just given us the global value
-		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime0_point]["pos"], max(0, fixedAmplitude - A0PrimeDist), fixedStdVec)
-		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime1_point]["pos"], max(0, fixedAmplitude - A1PrimeDist), fixedStdVec)
+		a_prime0_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime0_point]["pos"], fixedAmplitude - A0PrimeDist, fixedStdVec)
+		a_prime1_sum = Process3DGaussOnePoint(vert, highResVertMap[a_prime1_point]["pos"], fixedAmplitude - A1PrimeDist, fixedStdVec)
 
 		gaussA_total = bsum + asum
 		gaussA_prime0_total = bsum + a_prime0_sum
