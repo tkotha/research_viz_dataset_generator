@@ -400,7 +400,7 @@ def DeleteUnnecessaryFiles(filepathPattern):
 	fileList = glob.glob(filepathPattern)
 	for filepath in fileList:
 		try:
-			print("deleting " + filepath)
+			# print("deleting " + filepath)
 			os.remove(filepath)
 		except:
 			print("Error while deleting file: " + filepath)

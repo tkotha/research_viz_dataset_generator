@@ -211,7 +211,7 @@ def convertFuncAndOBJToJSON_WithIsoLines( OBJPath, FuncPath, IsoCount = 100):
 
 #------------JSON with isoline data and reeb graph-------------------------------------
 #Because we most likely plan on using catmull rom curves in the visualizer portion, we dont need as many iso contours to get us going
-def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath, ContourGroupingEpsilon = .01, GroupingStrategy = 1, IsoCount = 25):
+def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath, ContourGroupingEpsilon = .01, GroupingStrategy = 1, IsoCount = 25, verbose = False):
 	splice_filefunc = ntpath.basename(FuncPath)
 	splice_filefunc = os.path.splitext(splice_filefunc)[0]
 	splice_filereeb = ntpath.basename(ReebPath)
@@ -220,7 +220,8 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 	funcmodel = OpenSingleFunc(FuncPath)
 	reebmodel = OpenReebGraph(ReebPath)
 	csvmodel = ""
-	print("Contour Grouping Epsilon value: "+ str(ContourGroupingEpsilon))
+	if verbose:
+		print("Contour Grouping Epsilon value: "+ str(ContourGroupingEpsilon))
 	with open(CSVPath,'r') as csvfile:
 		for line in csvfile:
 			csvmodel += line 
@@ -336,7 +337,8 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 		#this will be our model for traversal calculations
 		tvmap = CreateTVMap(int(len(vertexlist)/3), funclist, trilist, objmodel[0])
 		vertmap = CreateVertMap(int(len(vertexlist)/3), trilist, objmodel[0])
-		pp = pprint.PrettyPrinter(indent = 3)
+		if verbose:
+			pp = pprint.PrettyPrinter(indent = 3)
 		# pp.pprint(arcset)
 
 		#when distinguishing between up or down saddles, you can just use the edgecount in the arcset data to distinguish that
@@ -395,25 +397,30 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 			#todo: convert this edge checklist code to account for multiple instances of 1 edge, and modify the BFS walk to aggregate multiple unique routes
 			#		we will have to go back to using TVMaps to take into account the disjoint sets for positive traversal. once those sets are found, we just use those as the starting point and then do bfs traversal from there
 			hasCandidateMatches = True
-			print("Check List: ")
+			if verbose:
+				print("Check List: ")
 			for e in edgeChecklist:
-				print([e[0],e[1]])
+				if verbose:
+					print([e[0],e[1]])
 				new_candidate = StupidReebWalkBFS(e[6], e[1], vertmap)
 				#concatinate the starting_maxpath to our walk
 				new_candidate[2] = [e[6]] + new_candidate[2]
 				#and make sure to replace our reeb start with the proper reeb start vertex
 				new_candidate[0] = e[0]
 				if len(new_candidate) != 0:
-					print("Walk : "+str(new_candidate[2]))
+					if verbose:
+						print("Walk : "+str(new_candidate[2]))
 					reebwalk_candidates.append(new_candidate)
 					e[5] = True
 				hasCandidateMatches = hasCandidateMatches and e[5]
-				if hasCandidateMatches:
-					print("---matched!")
-				else:
-					print("!!!!!FAILED!!!!!")
+				if verbose:
+					if hasCandidateMatches:
+						print("---matched!")
+					else:
+						print("!!!!!FAILED!!!!!")
 			assert hasCandidateMatches
-			print("has matches!")
+			if verbose:
+				print("has matches!")
 			# pp.pprint(reebwalk_candidates)
 			#once we have our candidates, for each candidate, match it against an edge in the checklist
 			#proceed with contour grouping, keeping track of the id list as well. 
@@ -422,17 +429,19 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 			for candidate in reebwalk_candidates:
 				start_reebvert_id = candidate[0]
 				end_reebvert_id = candidate[1]
-				print("NEW CANDIDATE-----")
-				print(candidate)
-				print([start_reebvert_id, end_reebvert_id])
-				print("---")
+				if verbose:
+					print("NEW CANDIDATE-----")
+					print(candidate)
+					print([start_reebvert_id, end_reebvert_id])
+					print("---")
 				# for e1 in arcset.keys():
 				# 	for e2 in arcset[e1].keys():
 				# 		print([e1,e2])
 
 				#handle all invalid edges here... I'm not sure we want to do this, b/c it implies we're ignoring a crucial flaw in the traversal... we'll see
 				if start_reebvert_id not in arcset or end_reebvert_id not in arcset[start_reebvert_id]:
-					print("Candidate seems to be invalid")
+					if verbose:
+						print("Candidate seems to be invalid")
 					continue
 
 				arcData = arcset[start_reebvert_id][end_reebvert_id]
@@ -479,7 +488,9 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 							e[4] = ContourIDList
 							break
 				else:
-					print("Reject arc! it is too similar to another one!")
+					if verbose:
+						print("Reject arc! it is too similar to another one!")
+					pass
 
 			#now at the end of our checklist, for now we want to be sure that ALL edges have been addressed
 			allFilled = True
@@ -513,9 +524,10 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 						elif v[0] == v2:
 							i2 = v[1]
 					assert i1 is not None and i2 is not None
-					print("failed to add arc for edge (" + str(e[0])+":" + str(i1)+","+str(e[1])+":" + str(i2)+") distance: " + str(abs(i1 - i2)) + " max: " + str(iso_dist_failure_threshold1))
-					if abs(i1 - i2) > iso_dist_failure_threshold1:
-						print("WARNING: ISO DIST FAILURE THRESHOLD HAS BEEN BREACHED!")
+					if verbose:
+						print("failed to add arc for edge (" + str(e[0])+":" + str(i1)+","+str(e[1])+":" + str(i2)+") distance: " + str(abs(i1 - i2)) + " max: " + str(iso_dist_failure_threshold1))
+						if abs(i1 - i2) > iso_dist_failure_threshold1:
+							print("WARNING: ISO DIST FAILURE THRESHOLD HAS BEEN BREACHED!")
 
 
 		#now comb through all the reebmodel edges and make sure everything has been supplied
@@ -524,7 +536,8 @@ def convertFuncAndOBJToJSON_WithIsoAndReeb(OBJPath, FuncPath, ReebPath, CSVPath,
 			reebEdgesFilled = reebEdgesFilled and len(r) > 2
 
 		if not reebEdgesFilled:
-			print("WARNING: NOT ALL OF THE REEB EDGES ARE FILLED! CHECK OUTPUT TO SEE IF THIS IS ERRONEOUS")
+			if verbose:
+				print("WARNING: NOT ALL OF THE REEB EDGES ARE FILLED! CHECK OUTPUT TO SEE IF THIS IS ERRONEOUS")
 			for r in reebmodel[1]:
 				if len(r) == 2:
 					r.append([])
@@ -1206,7 +1219,7 @@ def StupidReebWalkBFSMultiple(startReebID, endReebID, VertMap, target = 1):
 	return result
 
 #return a list of [ [start_reeb_id, end_reeb_id, walk_history = [vertid, ...]], ...]
-def ReebWalkerBFS(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges):
+def ReebWalkerBFS(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges, verbose = False):
 	vertChain = VertexObject.vertNeighborChain
 	# pp = pprint.PrettyPrinter(indent = 3)
 	# pp.pprint(vertChain)
@@ -1250,7 +1263,8 @@ def ReebWalkerBFS(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges
 						backEdgeDetected = False
 						for pe in ProcessedEdges:
 							if start_reeb_id == pe[1] and tb.vertID == pe[0]:
-								print("BACKEDGE DETECTED!")
+								if verbose:
+									print("BACKEDGE DETECTED!")
 								backEdgeDetected = True
 								break
 
@@ -1277,7 +1291,7 @@ def ReebWalkerBFS(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges
 
 
 #return a list of [ [start_reeb_id, end_reeb_id, walk_history = [vertid, ...]], ...]
-def ReebWalker(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges):
+def ReebWalker(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges, verbose = False):
 	vertChain = VertexObject.vertNeighborChain
 	# pp = pprint.PrettyPrinter(indent = 3)
 	# pp.pprint(vertChain)
@@ -1313,7 +1327,8 @@ def ReebWalker(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges):
 						backEdgeDetected = False
 						for pe in ProcessedEdges:
 							if start_reeb_id == pe[1] and tb.vertID == pe[0]:
-								print("BACKEDGE DETECTED!")
+								if verbose:
+									print("BACKEDGE DETECTED!")
 								backEdgeDetected = True
 								break
 
@@ -1335,7 +1350,8 @@ def ReebWalker(TriangleBands, TVMap, VertexObject, BandObject, ProcessedEdges):
 					break
 
 			if chosen_id == -1:
-				print("WE ARE BACKTRACKING! ReebVert("+ str(BandObject.vertID)+") TopVert: " + str(top))
+				if verbose:
+					print("WE ARE BACKTRACKING! ReebVert("+ str(BandObject.vertID)+") TopVert: " + str(top))
 				#we need to backtrack, as weve reached a deadend
 				walk_history.pop(-1)
 				continue
@@ -1391,11 +1407,12 @@ def GroupContoursByWalk(ContourData, ReebWalk, TVMap):
 #CreateContourCentroid(VertID, TargetIso, TVMap)
 #note: in this case, we have to base our centroids off of the length of the geometry, not the iso distance
 # for every n walks, we produce the centroid, known as the walk centroid rate
-def CreateCentroidsByWalk(ReebWalk, TVMap, WalkCentroidRate = 12):
+def CreateCentroidsByWalk(ReebWalk, TVMap, WalkCentroidRate = 12, verbose = False):
 	start_reeb_id = ReebWalk[0]
 	end_reeb_id = ReebWalk[1]
 	walk_history = ReebWalk[2]
-	print("Length of walk: " + str(len(walk_history)))
+	if verbose:
+		print("Length of walk: " + str(len(walk_history)))
 	contour_list = []
 
 	start_iso = TVMap["verts"][start_reeb_id].iso
@@ -1424,16 +1441,19 @@ def CreateCentroidsByWalk(ReebWalk, TVMap, WalkCentroidRate = 12):
 				if len(centroid) != 0:
 					contour_list.append([centroid[0],centroid[1],centroid[2], target_iso, -1]) #b/c we are generating contours on the fly, we do not refer to a contour id, thus -1
 				else:
-					print("Failed to get iso contour")
+					if verbose:
+						print("Failed to get iso contour")
 		last_vert_id = w
 
 	contour_list.sort(key = lambda f: f[3]) #sort by isovalue if needed
 	final_contour_list = []
 	final_contour_id_list = []
-	print("Contour List Length: "+str(len(contour_list)))
+	if verbose:
+		print("Contour List Length: "+str(len(contour_list)))
 	#in the extreme case that we have no contours at all, just calculate a midpoint
 	if len(contour_list) != 0:
-		print("Failed to find a contour set! Resorting to simple midpoint")
+		if verbose:
+			print("Failed to find a contour set! Resorting to simple midpoint")
 		vs = TVMap["verts"][start_reeb_id]
 		ve = TVMap["verts"][end_reeb_id]
 		target_iso = (vs.iso + ve.iso)/2.0
@@ -1449,11 +1469,12 @@ def CreateCentroidsByWalk(ReebWalk, TVMap, WalkCentroidRate = 12):
 	return (final_contour_list, final_contour_id_list)
 
 #what this simply means is that we will pass off the vertices themselves as the 'centroids'
-def CreateBFSBasedCentroidsByWalk(ReebWalk, TVMap):
+def CreateBFSBasedCentroidsByWalk(ReebWalk, TVMap, verbose = False):
 	start_reeb_id = ReebWalk[0]
 	end_reeb_id = ReebWalk[1]
 	walk_history = ReebWalk[2]
-	print("Length of walk: " + str(len(walk_history)))
+	if verbose:
+		print("Length of walk: " + str(len(walk_history)))
 	contour_list = []
 
 	start_iso = TVMap["verts"][start_reeb_id].iso
@@ -1486,7 +1507,8 @@ def CreateBFSBasedCentroidsByWalk(ReebWalk, TVMap):
 	contour_list.sort(key = lambda f: f[3]) #sort by isovalue if needed
 	final_contour_list = []
 	final_contour_id_list = []
-	print("Contour List Length: "+str(len(contour_list)))
+	if verbose:
+		print("Contour List Length: "+str(len(contour_list)))
 	assert len(contour_list) != 0
 
 	for con in contour_list:
@@ -1494,24 +1516,27 @@ def CreateBFSBasedCentroidsByWalk(ReebWalk, TVMap):
 		final_contour_id_list.append(con[4])
 	return (final_contour_list, final_contour_id_list)
 
-def GroupContoursByWalker33(ContourData, TVMap, ReebStartVert, startIso, ReebEndVert, endIso):
+def GroupContoursByWalker33(ContourData, TVMap, ReebStartVert, startIso, ReebEndVert, endIso, verbose = False):
 	reebstart = TVMap["verts"][ReebStartVert]
 	reebend = TVMap["verts"][ReebEndVert]
 
 	#big assumption: we assume all starting paths are valid, and sufficient and necessary
 	walkerpaths = reebstart.vertNeighborChain["maxpaths"]
-	pp = pprint.PrettyPrinter(indent = 3)
+	if verbose:
+		pp = pprint.PrettyPrinter(indent = 3)
 	# if ReebStartVert == 19:
 	# 	pp.pprint(reebstart.vertNeighborChain)
 	# 	print(ReebStartVert)
-	print("Length of the walker paths: " + str(len(walkerpaths)))
-	print(ReebStartVert)
-	print(ReebEndVert)
+	if verbose:
+		print("Length of the walker paths: " + str(len(walkerpaths)))
+		print(ReebStartVert)
+		print(ReebEndVert)
 	selected_contours = []
 	walk_histories = []
 	seen_contour_paths = []
 	for walk_start in walkerpaths:
-		print("-----STARTING WALK!------ GOAL VERT: "+str(ReebEndVert)+" GOAL ISO: "+str(endIso))
+		if verbose:
+			print("-----STARTING WALK!------ GOAL VERT: "+str(ReebEndVert)+" GOAL ISO: "+str(endIso))
 		walkerstate = [walk_start, TVMap["verts"][walk_start].iso]
 		centroid_list = []
 		seenverts = set()
@@ -1550,7 +1575,8 @@ def GroupContoursByWalker33(ContourData, TVMap, ReebStartVert, startIso, ReebEnd
 			#if we fail to find our next vertex, we are stuck and have to exit... 
 			#this might be okay, but for now I want to raise an exception to see if we ever reach this case
 			if next == -1:
-				print("COULD NOT CONTINUE REEB WALK!")
+				if verbose:
+					print("COULD NOT CONTINUE REEB WALK!")
 				raise Exception
 
 			next_iso = TVMap["verts"][next].iso
@@ -1559,7 +1585,7 @@ def GroupContoursByWalker33(ContourData, TVMap, ReebStartVert, startIso, ReebEnd
 			# 	print("to: ")
 			# 	pp.pprint(walkerstate)
 
-		if ReebStartVert == 19:
+		if ReebStartVert == 19 and verbose:
 			pp.pprint(TVMap["verts"][walkerstate[0]])
 		if walkerstate[0] not in walkhistory:
 			walkhistory.append(walkerstate[0])
@@ -1614,11 +1640,12 @@ def GroupContoursByWalker33(ContourData, TVMap, ReebStartVert, startIso, ReebEnd
 
 
 
-def CreateMeshComponents(VertexList, FuncList, TriList, MinIso, MaxIso, ReebStartVert, ReebEndVert, Epsilon):
+def CreateMeshComponents(VertexList, FuncList, TriList, MinIso, MaxIso, ReebStartVert, ReebEndVert, Epsilon, verbose = False):
 	tvmap = {"valid-verts": dict(), "invalid-verts": set(), "invalid-tris": set(),\
 			 "reeb-start": {"id": ReebStartVert, "triset": set(), "vertset":set(), "disjoint_neighbors":[]},\
 			 "reeb-end": {"id": ReebEndVert, "triset": set(), "vertset":set(), "disjoint_neighbors":[]}}
-	print(str(MinIso) + "->" + str(MaxIso))
+	if verbose:
+		print(str(MinIso) + "->" + str(MaxIso))
 	for ti, tri in enumerate(TriList):
 		v1,v2,v3 = tuple(tri)
 		i1 = FuncList[v1]
@@ -1701,7 +1728,8 @@ def CreateMeshComponents(VertexList, FuncList, TriList, MinIso, MaxIso, ReebStar
 		reebendconnected = tri not in tvmap["invalid-tris"] or reebendconnected
 
 	if not (reebstartconnected and reebendconnected):
-		print("FAILURE: COULD NOT ESTABLISH REEB CONNECTION IN MESH! Arc Edge Info: "+ str(ReebStartVert) +" "+ str(ReebEndVert))
+		if verbose:
+			print("FAILURE: COULD NOT ESTABLISH REEB CONNECTION IN MESH! Arc Edge Info: "+ str(ReebStartVert) +" "+ str(ReebEndVert))
 		return [], tvmap
 
 	components = []
@@ -1764,7 +1792,7 @@ def CreateMeshComponents(VertexList, FuncList, TriList, MinIso, MaxIso, ReebStar
 #the idea is as follows:
 #  take each vertex, and attempt to walk along it, and collect any contours along the way. If and only if the walks are successful do we claim the contours for that walk. otherwise nothing happens. this is to account for dead ends
 #  if a walk runs into an already claimed contour, then it's retreading the same steps and we ignore it (potential question: what if it finds contours but then runs into an already claimed one? do we have a partial new path?)
-def GroupContours1(ContourData, Components, ReebStartVert, ReebEndVert, MinIso, MaxIso, Epsilon, TVMap):
+def GroupContours1(ContourData, Components, ReebStartVert, ReebEndVert, MinIso, MaxIso, Epsilon, TVMap, verbose = False):
 	component_contour_set = dict()
 	#todo: create an ignore contour set, and add to it all contours whose triangles are shared with the start and end reeb verts
 	#      this way we can prune any obvious collision points
@@ -1783,7 +1811,8 @@ def GroupContours1(ContourData, Components, ReebStartVert, ReebEndVert, MinIso, 
 					break
 	walklists = []
 	contourlistlist = []
-	pp = pprint.PrettyPrinter(indent = 4)
+	if verbose:
+		pp = pprint.PrettyPrinter(indent = 4)
 	
 	# print(len(ContourData))
 	# for c in ContourData:
@@ -1852,11 +1881,13 @@ def GroupContours1(ContourData, Components, ReebStartVert, ReebEndVert, MinIso, 
 						if contour["id"] in seen_contour_ids and contour["id"] not in contour_ignore_set:
 							#we have trespassed on an existing walk, terminate ourselves
 							toProcess = False
-							print("Trespassed existing walk! Terminating...")
+							if verbose:
+								print("Trespassed existing walk! Terminating...")
 							if MinIso == 0.102527745:
-								print("Caught Contour: " + str(contour["id"])+":"+str(contour["contour"]["centroid"]))
-								for n in newcontourlist:
-									print(str(n[3])+":"+str(n[4])+"\n")
+								if verbose:
+									print("Caught Contour: " + str(contour["id"])+":"+str(contour["contour"]["centroid"]))
+									for n in newcontourlist:
+										print(str(n[3])+":"+str(n[4])+"\n")
 							break
 						else:
 							# print(partialSeen)
@@ -1878,18 +1909,18 @@ def GroupContours1(ContourData, Components, ReebStartVert, ReebEndVert, MinIso, 
 		#sort our new contourlist by the isovalue
 		# pp.pprint(newcontourlist)
 		newcontourlist.sort(key = lambda vec : vec[3])
+		if verbose:
+			if MinIso == 0.102527745:
+				for n in newcontourlist:
 
-		if MinIso == 0.102527745:
-			for n in newcontourlist:
-
-				print(str(n)+"\n")
+					print(str(n)+"\n")
 		contourlistlist.append(newcontourlist)
 	return contourlistlist
 
 
-def GroupContours2(ContourData, Components, ReebStartVert, ReebEndVert):
-
-	print("--- START GROUPING---")
+def GroupContours2(ContourData, Components, ReebStartVert, ReebEndVert, verbose = False):
+	if verbose:
+		print("--- START GROUPING---")
 	component_contour_set = dict()
 	for c in Components:
 		newset = {"id": c.id, "centroids":[], "contour-ids":[]}
@@ -1919,11 +1950,12 @@ def GroupContours2(ContourData, Components, ReebStartVert, ReebEndVert):
 	for k in component_contour_set.keys():
 		newcontourlist = []
 		for ci, c in enumerate(component_contour_set[k]["centroids"]):
-			print("Adding Contour "+str(component_contour_set[k]["contour-ids"][ci])+" with centroid "+str(c)+" to arc of ("+str(ReebStartVert) + ","+str(ReebEndVert)+")")
+			if verbose:
+				print("Adding Contour "+str(component_contour_set[k]["contour-ids"][ci])+" with centroid "+str(c)+" to arc of ("+str(ReebStartVert) + ","+str(ReebEndVert)+")")
 			newcontourlist.append(c)
 		newcontourlist.sort(key = lambda vec : vec[3])
 		contourlistlist.append(newcontourlist)
-
-	print("--- END GROUPING---")
+	if verbose:
+		print("--- END GROUPING---")
 	return contourlistlist
 
